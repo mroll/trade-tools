@@ -1,0 +1,3 @@
+(executables
+ (names exchange sequencer)
+ (libraries unix trade_lib cmdliner))

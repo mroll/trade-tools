@@ -1,0 +1,5 @@
+(library
+ (name trade_lib)
+ (public_name trade-tools.lib)
+ (libraries ocplib-endian)
+ (modules order book execution))

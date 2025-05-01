@@ -1,0 +1,28 @@
+# Dune build output
+/_build/
+*.install
+
+# Editor and IDE files
+/.merlin
+/.merlin-global-config
+*.swp
+*.swo
+*~
+*.bak
+*.tmp
+*#
+
+# OCamlformat cache (optional)
+/.ocamlformat
+
+# MacOS
+.DS_Store
+
+# Compiled binaries (optional, depending on project)
+/*.exe
+/*.bc
+/*.byte
+/*.native
+
+# Node projects (if you ever add frontends)
+/node_modules/
