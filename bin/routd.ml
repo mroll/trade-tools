@@ -11,42 +11,8 @@ let handle_order r stream_w =
   in
   return ()
 
-let handle_handshake used_ports f =
-  let allocate_port start stop used_ports =
-    let rec find p =
-      if p > stop then None
-      else if Set.mem used_ports p then find (p + 1)
-      else Some p
-    in
-    find start
-  in
-
-  fun _addr _r w ->
-    match allocate_port 50000 60000 !used_ports with
-    | Some new_port ->
-        used_ports := Set.add !used_ports new_port;
-
-        let%bind _server =
-          Tcp.Server.create ~on_handler_error:`Raise
-            (Tcp.Where_to_listen.of_port new_port) (fun client_addr r w ->
-              let%bind () = f client_addr r w in
-              return ())
-        in
-
-        let%bind () =
-          Writer.write_line w (Int.to_string new_port);
-          Writer.flushed w
-        in
-        return ()
-    | None ->
-        let%bind () =
-          Writer.write_line w "ERROR: No ports available";
-          Writer.flushed w
-        in
-        return ()
-
 let run_gateway port stream_host stream_port =
-  let used_ports = ref Int.Set.empty in
+  let%bind session_manager = Session_manager.create (50000, 60000) in
 
   let%bind sequencer_socket =
     Tcp.connect
@@ -57,9 +23,10 @@ let run_gateway port stream_host stream_port =
 
   let%bind _ =
     Tcp.Server.create ~on_handler_error:`Raise
-      (Tcp.Where_to_listen.of_port port)
-      (handle_handshake used_ports (fun _client_add r _w ->
-           handle_order r stream_w))
+      (Tcp.Where_to_listen.of_port port) (fun addr r w ->
+        Session_manager.handle_handshake session_manager
+          (fun _addr r _w -> handle_order r stream_w)
+          addr r w)
   in
   Deferred.never ()
 
