@@ -1,3 +1,6 @@
+open Core
+open Async
+
 type side = Buy | Sell
 
 type t = {
@@ -27,14 +30,28 @@ let encode (o : t) : bytes =
   let buf = Bytes.make 44 '\000' in
   (* id (16 bytes, padded) *)
   let id_bytes = Bytes.of_string o.id in
-  Bytes.blit id_bytes 0 buf 0 (min 16 (Bytes.length id_bytes));
+  Bytes.blit ~src:id_bytes ~src_pos:0 ~dst:buf ~dst_pos:0
+    ~len:(min 16 (Bytes.length id_bytes));
 
   (* price and size *)
-  EndianBytes.BigEndian.set_int32 buf 16 (Int32.of_int o.price);
-  EndianBytes.BigEndian.set_int32 buf 20 (Int32.of_int o.size);
+  let () =
+    match Int32.of_int o.price with
+    | Some price -> EndianBytes.BigEndian.set_int32 buf 16 price
+    | None -> failwith "Failed to encode order price"
+  in
+
+  let () =
+    match Int32.of_int o.size with
+    | Some size -> EndianBytes.BigEndian.set_int32 buf 20 size
+    | None -> failwith "Failed to encode order size"
+  in
 
   (* side *)
-  Bytes.set buf 24 (Char.chr (side_to_byte o.side));
+  let () =
+    match Char.of_int (side_to_byte o.side) with
+    | Some side_bytes -> Bytes.set buf 24 side_bytes
+    | None -> failwith "Failed to encode side"
+  in
 
   (* 3 bytes padding: already \000 *)
 
@@ -49,11 +66,25 @@ let encode (o : t) : bytes =
 let decode (buf : bytes) : t =
   if Bytes.length buf <> 44 then failwith "Invalid buffer length";
 
-  let id = Bytes.sub_string buf 0 16 |> String.trim in
-  let price = EndianBytes.BigEndian.get_int32 buf 16 |> Int32.to_int in
-  let size = EndianBytes.BigEndian.get_int32 buf 20 |> Int32.to_int in
-  let side = Bytes.get buf 24 |> Char.code |> byte_to_side in
+  let id = Bytes.sub buf ~pos:0 ~len:16 |> Bytes.to_string |> String.strip in
+  let price = EndianBytes.BigEndian.get_int32 buf 16 |> Int32.to_int_exn in
+  let size = EndianBytes.BigEndian.get_int32 buf 20 |> Int32.to_int_exn in
+  let side = Bytes.get buf 24 |> Char.to_int |> byte_to_side in
   let timestamp = EndianBytes.BigEndian.get_int64 buf 28 in
   let sequence_number = EndianBytes.BigEndian.get_int64 buf 36 in
 
   { id; price; size; side; timestamp; sequence_number }
+
+let accept_from_reader r =
+  let buf = Bytes.create order_bytes in
+  let%bind result = Reader.really_read r buf ~pos:0 ~len:order_bytes in
+  match result with
+  | `Ok -> return (decode buf)
+  | `Eof n -> raise_s [%message "Unexpected EOF while reading order" (n : int)]
+
+let accept_as_bytes_from_reader r =
+  let buf = Bytes.create order_bytes in
+  let%bind result = Reader.really_read r buf ~pos:0 ~len:order_bytes in
+  match result with
+  | `Ok -> return buf
+  | `Eof n -> raise_s [%message "Unexpected EOF while reading order" (n : int)]

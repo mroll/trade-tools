@@ -24,7 +24,8 @@ let empty : t = TickerMap.empty
 let find_book ticker exchange : Book.t =
   match TickerMap.find_opt ticker exchange with
   | Some book -> book
-  | None -> { buy_orders = Book.PriceMap.empty; sell_orders = Book.PriceMap.empty }
+  | None ->
+      { buy_orders = Book.PriceMap.empty; sell_orders = Book.PriceMap.empty }
 
 let update_book ticker book exchange = TickerMap.add ticker book exchange
 
@@ -32,11 +33,10 @@ let process_order ticker order exchange =
   let book = find_book ticker exchange in
   let updated_book, executions = Book.try_match_order order book in
   let book_after_insert =
-    if order.size > 0 then Book.insert_order order updated_book else updated_book
+    if order.size > 0 then Book.insert_order order updated_book
+    else updated_book
   in
   (update_book ticker book_after_insert exchange, executions)
-
-(* TODO: Update to parse binary protocol off the wire. *)
 
 let rec handle_connection ic oc exchange =
   let buf = Bytes.create Order.order_bytes in
@@ -90,4 +90,3 @@ let cmd =
   Cmd.v (Cmd.info "exchange" ~doc ~exits) term
 
 let () = exit (Cmd.eval cmd)
-

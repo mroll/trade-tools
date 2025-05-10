@@ -28,6 +28,7 @@ let send_random_orders ~port ~count =
     flush oc;
     if i mod 1000 = 0 then Printf.printf "Sent %d orders\n%!" i;
     (* optional sleep to simulate network delay *)
+    Unix.sleepf 0.000001
     (* 1ms delay *)
   done;
 

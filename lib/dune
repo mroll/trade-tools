@@ -1,5 +1,6 @@
 (library
  (name trade_lib)
  (public_name trade-tools.lib)
- (libraries ocplib-endian)
- (modules order book execution))
+ (libraries async core ocplib-endian)
+ (preprocess (pps ppx_jane))
+ (modules order book execution session_manager))
