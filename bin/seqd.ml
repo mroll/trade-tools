@@ -18,12 +18,12 @@ let run_seqd port stream_host stream_port =
   let%bind session_manager = Session_manager.create (55000, 60000) in
   let sequencer = Sequencer.create 0L in
 
-  let%bind seqd_socket =
+  let%bind matchd_socket =
     Tcp.connect
       (Tcp.Where_to_connect.of_host_and_port
          (Host_and_port.create ~host:stream_host ~port:stream_port))
   in
-  let _sock, _stream_r, stream_w = seqd_socket in
+  let _sock, _stream_r, stream_w = matchd_socket in
 
   let%bind _ =
     Tcp.Server.create ~on_handler_error:`Raise
@@ -32,6 +32,8 @@ let run_seqd port stream_host stream_port =
           (fun _addr r _w -> handle_order r stream_w sequencer)
           addr r w)
   in
+  printf "[+] seqd started.\n";
+  printf "[+] Listening on port %d.\n" port;
   Deferred.never ()
 
 let () =

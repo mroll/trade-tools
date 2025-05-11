@@ -28,6 +28,8 @@ let run_gateway port stream_host stream_port =
           (fun _addr r _w -> handle_order r stream_w)
           addr r w)
   in
+  printf "[+] routd started.\n";
+  printf "[+] Listening on port %d.\n" port;
   Deferred.never ()
 
 let () =

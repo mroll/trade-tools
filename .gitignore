@@ -1,5 +1,6 @@
 # Dune build output
 /_build/
+/_install/
 *.install
 
 # Editor and IDE files

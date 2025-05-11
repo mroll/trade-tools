@@ -1,4 +1,10 @@
 (executables
-  (names exchange seqd routd)
-  (libraries unix trade_lib cmdliner async core)
-  (preprocess (pps ppx_let)))
+ (names matchd routd seqd)
+ (public_names matchd routd seqd)
+ (libraries unix trade_lib cmdliner async core)
+ (preprocess (pps ppx_let)))
+
+(rule
+ (alias run-matchd)
+ (action
+  (run ./matchd.exe --port 4002)))
