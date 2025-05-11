@@ -1,4 +1,4 @@
 (executables
-  (names exchange sequencer routd)
+  (names exchange seqd routd)
   (libraries unix trade_lib cmdliner async core)
   (preprocess (pps ppx_let)))
