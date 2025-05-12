@@ -3,4 +3,4 @@
  (public_name trade-tools.lib)
  (libraries async core ocplib-endian)
  (preprocess (pps ppx_jane))
- (modules order book execution session_manager sequencer))
+ (modules order book execution session_manager sequencer uuid_utils))

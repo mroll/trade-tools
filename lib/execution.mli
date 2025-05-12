@@ -15,3 +15,4 @@ val create :
   t
 
 val make_execution : Order.t -> Order.t -> int -> int -> int64 -> t
+val log_summary : t -> string -> unit

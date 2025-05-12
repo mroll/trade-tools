@@ -31,14 +31,18 @@ let process_order ticker order exchange =
   in
   (update_book ticker book_after_insert exchange, executions)
 
-let handle_order r exchange =
-  let%bind order = Order.accept_from_reader r in
-
-  let ticker = "TEST" in
-  let exch', _ = process_order ticker order !exchange in
-
-  exchange := exch';
-  return ()
+let rec handle_order r exchange =
+  let%bind result = Order.accept_from_reader r in
+  match result with
+  | Some order ->
+      let ticker = "TEST" in
+      let exch', executions = process_order ticker order !exchange in
+      exchange := exch';
+      List.iter executions ~f:(fun e -> Execution.log_summary e "executed");
+      handle_order r exchange
+  | None ->
+      printf "[+] client disconnected or sent invalid data\n%!";
+      return ()
 
 let run_matchd port =
   let exchange = ref empty in

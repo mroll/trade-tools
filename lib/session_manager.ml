@@ -53,7 +53,7 @@ let shutdown_session t session =
   Hashtbl.remove t.sessions session.id;
   Deferred.unit
 
-let handle_handshake t f addr _r w =
+let handle_server_handshake t f addr _r w =
   let open Deferred.Let_syntax in
   let%bind () = Mvar.take t.lock in
   match allocate_port t with
@@ -90,3 +90,17 @@ let handle_handshake t f addr _r w =
         Writer.flushed w
       in
       return ()
+
+let handle_client_handshake host port =
+  let%bind socket =
+    Tcp.connect
+      (Tcp.Where_to_connect.of_host_and_port (Host_and_port.create ~host ~port))
+  in
+  let _sock, reader, _writer = socket in
+  let%bind result = Reader.read_line reader in
+  match result with
+  | `Ok line -> (
+      match Int.of_string_opt (String.strip line) with
+      | Some port -> return port
+      | None -> failwithf "Invalid session port received: %s" line ())
+  | `Eof -> failwith "Unexpected EOF while reading session port"

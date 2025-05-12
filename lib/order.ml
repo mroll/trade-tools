@@ -79,12 +79,33 @@ let accept_from_reader r =
   let buf = Bytes.create order_bytes in
   let%bind result = Reader.really_read r buf ~pos:0 ~len:order_bytes in
   match result with
-  | `Ok -> return (decode buf)
-  | `Eof n -> raise_s [%message "Unexpected EOF while reading order" (n : int)]
+  | `Eof n when n = 0 -> return None
+  | `Eof n ->
+      printf "Parial read (got %d bytes), closing connection\n%!" n;
+      return None
+  | `Ok ->
+      let order = decode buf in
+      return (Some order)
 
 let accept_as_bytes_from_reader r =
   let buf = Bytes.create order_bytes in
   let%bind result = Reader.really_read r buf ~pos:0 ~len:order_bytes in
   match result with
-  | `Ok -> return buf
-  | `Eof n -> raise_s [%message "Unexpected EOF while reading order" (n : int)]
+  | `Eof n when n = 0 -> return None
+  | `Eof n ->
+      printf "Parial read (got %d bytes), closing connection\n%!" n;
+      return None
+  | `Ok -> return (Some buf)
+
+let log_summary_from_bytes buf prefix =
+  let id = Bytes.sub buf ~pos:0 ~len:16 |> Bytes.to_string |> String.strip in
+  let price = EndianBytes.BigEndian.get_int32 buf 16 |> Int32.to_int_exn in
+  let size = EndianBytes.BigEndian.get_int32 buf 20 |> Int32.to_int_exn in
+  let side = Bytes.get buf 24 |> Char.to_int in
+  let side_str = match side with 0 -> "Buy" | 1 -> "Sell" | _ -> "?" in
+  let sequence_number = EndianBytes.BigEndian.get_int64 buf 36 in
+
+  Log.Global.info "%sid=%s sequence_number=%s size=%d price=%d side=%s" prefix
+    id
+    (Int64.to_string sequence_number)
+    size price side_str
