@@ -11,6 +11,7 @@ type t = {
   sequence_number : int64;
 }
 
+val side_of_string_exn : string -> side
 val side_to_string : side -> string
 val to_json_string : t -> string
 val price_matches : int -> t -> bool

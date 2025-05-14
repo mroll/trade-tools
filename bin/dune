@@ -1,7 +1,7 @@
 (executables
- (names matchd routd seqd simclient feedd)
- (public_names matchd routd seqd simclient feedd)
- (libraries unix trade_lib cmdliner async core)
+ (names matchd routd seqd simclient feedd agentd)
+ (public_names matchd routd seqd simclient feedd agentd)
+ (libraries unix trade_lib cmdliner async core dynlink)
  (preprocess (pps ppx_let)))
 
 (rule

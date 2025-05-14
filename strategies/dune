@@ -1,0 +1,5 @@
+(executable
+ (name my_strategy)
+ (modules my_strategy)
+ (modes plugin)
+ (libraries trade_lib yojson))

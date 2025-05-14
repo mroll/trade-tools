@@ -28,6 +28,12 @@ let byte_to_side = function
 
 let side_to_string = function Buy -> "buy" | Sell -> "sell"
 
+let side_of_string_exn (s : string) : side =
+  match String.lowercase s with
+  | "buy" -> Buy
+  | "sell" -> Sell
+  | _ -> invalid_arg ("Order.side_of_string_exn: unknown side: " ^ s)
+
 let to_json (o : t) : Yojson.Safe.t =
   `Assoc
     [
