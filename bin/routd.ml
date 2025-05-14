@@ -6,7 +6,7 @@ let rec handle_order r stream_w =
   let%bind result = Order.accept_as_bytes_from_reader r in
   match result with
   | Some order_bytes ->
-      Order.log_summary_from_bytes order_bytes "[+] received order ";
+      (* Order.log_summary_from_bytes order_bytes "[+] received order "; *)
       Writer.write_bytes stream_w order_bytes;
       let%bind () = Writer.flushed stream_w in
       handle_order r stream_w

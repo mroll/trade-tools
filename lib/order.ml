@@ -12,7 +12,7 @@ type t = {
   sequence_number : int64;
 }
 
-let order_bytes = 44
+let order_width = 44
 
 let price_matches (price : int) (order : t) =
   match order.side with
@@ -26,8 +26,24 @@ let byte_to_side = function
   | 1 -> Sell
   | _ -> failwith "Invalid side byte"
 
+let side_to_string = function Buy -> "buy" | Sell -> "sell"
+
+let to_json (o : t) : Yojson.Safe.t =
+  `Assoc
+    [
+      ("type", `String "order");
+      ("id", `String o.id);
+      ("price", `Int o.price);
+      ("size", `Int o.size);
+      ("side", `String (side_to_string o.side));
+      ("timestamp", `String (Int64.to_string o.timestamp));
+      ("sequence_number", `String (Int64.to_string o.sequence_number));
+    ]
+
+let to_json_string (o : t) : string = Yojson.Safe.to_string (to_json o)
+
 let encode (o : t) : bytes =
-  let buf = Bytes.make 44 '\000' in
+  let buf = Bytes.make order_width '\000' in
   (* id (16 bytes, padded) *)
   let id_bytes = Bytes.of_string o.id in
   Bytes.blit ~src:id_bytes ~src_pos:0 ~dst:buf ~dst_pos:0
@@ -64,7 +80,7 @@ let encode (o : t) : bytes =
   buf
 
 let decode (buf : bytes) : t =
-  if Bytes.length buf <> 44 then failwith "Invalid buffer length";
+  if Bytes.length buf <> order_width then failwith "Invalid buffer length";
 
   let id = Bytes.sub buf ~pos:0 ~len:16 |> Bytes.to_string |> String.strip in
   let price = EndianBytes.BigEndian.get_int32 buf 16 |> Int32.to_int_exn in
@@ -76,8 +92,8 @@ let decode (buf : bytes) : t =
   { id; price; size; side; timestamp; sequence_number }
 
 let accept_from_reader r =
-  let buf = Bytes.create order_bytes in
-  let%bind result = Reader.really_read r buf ~pos:0 ~len:order_bytes in
+  let buf = Bytes.create order_width in
+  let%bind result = Reader.really_read r buf ~pos:0 ~len:order_width in
   match result with
   | `Eof n when n = 0 -> return None
   | `Eof n ->
@@ -88,8 +104,8 @@ let accept_from_reader r =
       return (Some order)
 
 let accept_as_bytes_from_reader r =
-  let buf = Bytes.create order_bytes in
-  let%bind result = Reader.really_read r buf ~pos:0 ~len:order_bytes in
+  let buf = Bytes.create order_width in
+  let%bind result = Reader.really_read r buf ~pos:0 ~len:order_width in
   match result with
   | `Eof n when n = 0 -> return None
   | `Eof n ->

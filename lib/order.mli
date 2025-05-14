@@ -11,10 +11,11 @@ type t = {
   sequence_number : int64;
 }
 
+val to_json_string : t -> string
 val price_matches : int -> t -> bool
 val encode : t -> bytes
 val decode : bytes -> t
-val order_bytes : int
+val order_width : int
 val accept_from_reader : Reader.t -> t option Deferred.t
 val accept_as_bytes_from_reader : Reader.t -> bytes option Deferred.t
 val log_summary_from_bytes : bytes -> string -> unit

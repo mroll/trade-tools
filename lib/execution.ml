@@ -24,3 +24,16 @@ let log_summary execution prefix =
     execution.buy_order.id execution.sell_order.id execution.price
     execution.quantity
     (Int64.to_string execution.timestamp)
+
+let to_json (e : t) : Yojson.Safe.t =
+  `Assoc
+    [
+      ("type", `String "execution");
+      ("buy_order", `String e.buy_order.id);
+      ("sell_order", `String e.sell_order.id);
+      ("price", `Int e.price);
+      ("quantity", `Int e.quantity);
+      ("timestamp", `String (Int64.to_string e.timestamp));
+    ]
+
+let to_json_string (e : t) : string = Yojson.Safe.to_string (to_json e)

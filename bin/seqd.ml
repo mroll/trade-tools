@@ -9,8 +9,7 @@ let rec handle_order r stream_w sequencer =
       let%bind sequence_number = Sequencer.next sequencer in
       EndianBytes.BigEndian.set_int64 order_bytes 36 sequence_number;
 
-      Order.log_summary_from_bytes order_bytes "[+] sending order ";
-
+      (* Order.log_summary_from_bytes order_bytes "[+] sending order "; *)
       let%bind () =
         Writer.write_bytes stream_w order_bytes;
         Writer.flushed stream_w
@@ -21,7 +20,7 @@ let rec handle_order r stream_w sequencer =
       return ()
 
 let run_seqd port stream_host stream_port =
-  let%bind session_manager = Session_manager.create (55000, 60000) in
+  let%bind session_manager = Session_manager.create (55000, 57999) in
   let sequencer = Sequencer.create 0L in
 
   let%bind matchd_socket =

@@ -16,3 +16,4 @@ val create :
 
 val make_execution : Order.t -> Order.t -> int -> int -> int64 -> t
 val log_summary : t -> string -> unit
+val to_json_string : t -> string

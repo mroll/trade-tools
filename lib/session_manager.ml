@@ -6,6 +6,8 @@ type session = {
   port : int;
   client_addr : Socket.Address.Inet.t;
   started_at : Time_float.t;
+  reader : Reader.t;
+  writer : Writer.t;
 }
 
 type t = {
@@ -68,21 +70,22 @@ let handle_server_handshake t f addr _r w =
       Hash_set.add t.used_ports port;
       let%bind () = Mvar.put t.lock () in
 
-      let session_id = gen_uuid () in
-      let session =
-        {
-          id = session_id;
-          port;
-          client_addr = addr;
-          started_at = Time_float.now ();
-        }
-      in
-      Hashtbl.set t.sessions ~key:session_id ~data:session;
-
       let%bind _server =
         Tcp.Server.create ~on_handler_error:`Raise
-          (Tcp.Where_to_listen.of_port port)
-          f
+          (Tcp.Where_to_listen.of_port port) (fun _addr r w ->
+            let session_id = gen_uuid () in
+            let session =
+              {
+                id = session_id;
+                port;
+                client_addr = addr;
+                started_at = Time_float.now ();
+                reader = r;
+                writer = w;
+              }
+            in
+            Hashtbl.set t.sessions ~key:session_id ~data:session;
+            f addr r w)
       in
 
       let%bind () =

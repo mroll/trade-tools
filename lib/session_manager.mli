@@ -6,6 +6,8 @@ type session = {
   port : int;
   client_addr : Socket.Address.Inet.t;
   started_at : Time_float.t;
+  reader : Reader.t;
+  writer : Writer.t;
 }
 
 type t
