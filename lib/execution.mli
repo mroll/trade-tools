@@ -3,6 +3,7 @@ type t = {
   sell_order : Order.t;
   price : int;
   quantity : int;
+  aggressor : Order.side;
   timestamp : int64;
 }
 
@@ -11,6 +12,7 @@ val create :
   sell_order:Order.t ->
   price:int ->
   quantity:int ->
+  aggressor:Order.side ->
   timestamp:int64 ->
   t
 
