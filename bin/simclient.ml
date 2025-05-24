@@ -3,6 +3,7 @@ open Async
 open Trade_lib
 
 let generate_order ~sequence_number =
+  let ticker = "TEST" in
   let price = Random.int 1000 + 100 in
   let size = Random.int 100 + 1 in
   let side = if Random.bool () then Order.Buy else Order.Sell in
@@ -11,6 +12,7 @@ let generate_order ~sequence_number =
 
   {
     Order.id;
+    ticker;
     price;
     size;
     side;
@@ -26,7 +28,7 @@ let rec send_orders writer ~count ~seq =
     let buf = Order.encode order in
     Writer.write_bytes writer buf;
     let%bind () = Writer.flushed writer in
-    let%bind () = after (Time_float.Span.of_ms 2.) in
+    (* let%bind () = after (Time_float.Span.of_ms 2.) in *)
     send_orders writer ~count:(count - 1) ~seq:Int64.(seq + 1L)
 
 let run ~host ~port ~count =

@@ -1,6 +1,6 @@
 (executables
- (names matchd routd seqd simclient feedd agentd)
- (public_names matchd routd seqd simclient feedd agentd)
+ (names matchd routd seqd simclient feedd agentd oracled)
+ (public_names matchd routd seqd simclient feedd agentd oracled)
  (libraries unix trade_lib cmdliner async core dynlink)
  (preprocess (pps ppx_let)))
 

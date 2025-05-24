@@ -4,6 +4,7 @@ type side = Buy | Sell
 
 type t = {
   id : string;
+  ticker : string;
   price : int;
   size : int;
   side : side;

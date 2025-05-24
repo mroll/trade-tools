@@ -2,4 +2,12 @@
  (name my_strategy)
  (modules my_strategy)
  (modes plugin)
- (libraries trade_lib yojson))
+ (libraries trade_lib yojson)
+ (preprocess (pps ppx_let)))
+
+(executable
+ (name market_maker)
+ (modules market_maker)
+ (modes plugin)
+ (libraries trade_lib yojson)
+ (preprocess (pps ppx_let)))

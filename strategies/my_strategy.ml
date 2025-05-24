@@ -5,7 +5,9 @@ open Trade_lib
 let () =
   Strategy_intf.register
     (module struct
-      let init () = print_endline "Init"
+      let init _w _oracle_host _oracle_port =
+        print_endline "Init";
+        return ()
 
       let handle_event ev _w =
         Log.Global.info "Got event: %s"

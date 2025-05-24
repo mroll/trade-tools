@@ -1,7 +1,7 @@
 open Async
 
 module type STRATEGY = sig
-  val init : unit -> unit
+  val init : Writer.t -> string -> int -> unit Deferred.t
   val handle_event : L3_event.t -> Writer.t -> unit
 end
 

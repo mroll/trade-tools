@@ -2,6 +2,8 @@ open Core
 open Async
 open Trade_lib
 
+let _ = ignore (Trade_lib.Uuid_utils.gen_uuid ())
+
 let rec handle_market_event data_r gateway_w strategy_handle_event =
   let%bind result = Reader.read_line data_r in
   match result with
@@ -15,11 +17,10 @@ let rec handle_market_event data_r gateway_w strategy_handle_event =
       Log.Global.error "Got EOF while reading market data\n";
       return ()
 
-let run_agentd gateway_host gateway_port data_host data_port strategy_path =
-  print_endline "In run_agentd";
+let run_agentd gateway_host gateway_port data_host data_port oracle_host
+    oracle_port strategy_path =
   Dynlink.loadfile_private strategy_path;
   let module S = (val Strategy_intf.get () : Strategy_intf.STRATEGY) in
-  S.init ();
   let%bind gateway_session_port =
     Session_manager.handle_client_handshake gateway_host gateway_port
   in
@@ -44,6 +45,7 @@ let run_agentd gateway_host gateway_port data_host data_port strategy_path =
   printf "[+] Connected to trading gateway on port %d.\n" gateway_port;
   printf "[+] Listening for market data on port %d.\n" data_port;
 
+  let%bind () = S.init gateway_w oracle_host oracle_port in
   handle_market_event data_r gateway_w S.handle_event
 
 let () =
@@ -61,10 +63,17 @@ let () =
      and data_port =
        flag "--data-port" (required int)
          ~doc:"PORT Port to listen to for market data"
+     and oracle_host =
+       flag "--oracle-host" (required string)
+         ~doc:"HOST Host where the oracle is"
+     and oracle_port =
+       flag "--oracle-port" (required int)
+         ~doc:"PORT Port to connect to oracle on"
      and strategy_path =
        flag "--strategy" (required string)
          ~doc:"PATH Path to plugin file with strategy logic"
      in
      fun () ->
-       run_agentd gateway_host gateway_port data_host data_port strategy_path)
+       run_agentd gateway_host gateway_port data_host data_port oracle_host
+         oracle_port strategy_path)
   |> Command_unix.run
