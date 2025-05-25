@@ -1,23 +1,33 @@
 open Async
 
 type t = {
-  buy_order : Order.t;
-  sell_order : Order.t;
+  ticker : string;
+  buy_order : Add.t;
+  sell_order : Add.t;
   price : int;
   quantity : int;
-  aggressor : Order.side;
+  aggressor : Add.side;
   timestamp : int64;
 }
 
-let create ~(buy_order : Order.t) ~(sell_order : Order.t) ~(price : int)
-    ~(quantity : int) ~(aggressor : Order.side) ~(timestamp : int64) : t =
-  { buy_order; sell_order; price; quantity; aggressor; timestamp }
+let create ~(ticker : string) ~(buy_order : Add.t) ~(sell_order : Add.t)
+    ~(price : int) ~(quantity : int) ~(aggressor : Add.side)
+    ~(timestamp : int64) : t =
+  { ticker; buy_order; sell_order; price; quantity; aggressor; timestamp }
 
-let make_execution (o1 : Order.t) (o2 : Order.t) (quantity : int) (price : int)
+let make_execution (o1 : Add.t) (o2 : Add.t) (quantity : int) (price : int)
     (timestamp : int64) =
   let buy_order = if o1.side = Buy then o1 else o2 in
   let sell_order = if o1.side = Sell then o1 else o2 in
-  { buy_order; sell_order; price; quantity; aggressor = o1.side; timestamp }
+  {
+    ticker = o1.ticker;
+    buy_order;
+    sell_order;
+    price;
+    quantity;
+    aggressor = o1.side;
+    timestamp;
+  }
 
 let log_summary execution prefix =
   Log.Global.info

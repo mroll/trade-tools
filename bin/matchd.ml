@@ -5,19 +5,22 @@ open Trade_lib
 let rec handle_order engine r stream_w =
   let%bind result = Order.accept_from_reader r in
   match result with
-  | Some order ->
-      let executions = Matching_engine.process_order engine order in
+  | Some order -> (
+      match order with
+      | Add add ->
+          let executions = Matching_engine.process_order engine add in
 
-      (match !stream_w with
-      | Some w ->
-          L3_event.write_l3_event_ndjson w
-            (L3_event.l3_event_of_feed_input (OrderInput order));
-          List.iter executions ~f:(fun e ->
+          (match !stream_w with
+          | Some w ->
               L3_event.write_l3_event_ndjson w
-                (L3_event.l3_event_of_feed_input (ExecutionInput e)))
-      | None -> ());
+                (L3_event.l3_event_of_feed_input (OrderInput order));
+              List.iter executions ~f:(fun e ->
+                  L3_event.write_l3_event_ndjson w
+                    (L3_event.l3_event_of_feed_input (ExecutionInput e)))
+          | None -> ());
 
-      handle_order engine r stream_w
+          handle_order engine r stream_w
+      | Cancel _ -> handle_order engine r stream_w)
   | None ->
       printf "[+] client disconnected or sent invalid data\n%!";
       return ()

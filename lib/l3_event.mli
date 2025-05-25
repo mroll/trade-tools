@@ -2,14 +2,23 @@ open Async
 
 (** Type representing a single L3 market event *)
 type t =
-  | Add of { order_id : string; side : Order.side; price : int; size : int }
-  | Trade of { price : int; size : int; aggressor : Order.side }
+  | Add of {
+      order_id : string;
+      ticker : string;
+      side : Add.side;
+      price : int;
+      size : int;
+    }
+  | Cancel of { order_id : string }
+  | Trade of { ticker : string; price : int; size : int; aggressor : Add.side }
 
 (** Type representing abstract input to the feed — either an order or an
     execution *)
 type feed_input = OrderInput of Order.t | ExecutionInput of Execution.t
 
-val l3_event_of_order : Order.t -> t
+val l3_event_of_add : Add.t -> t
+
+val l3_event_of_cancel : Cancel.t -> t
 (** Convert an Order.t into an L3 add event *)
 
 val l3_event_of_execution : Execution.t -> t

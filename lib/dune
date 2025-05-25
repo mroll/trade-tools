@@ -3,4 +3,4 @@
  (public_name trade-tools.lib)
  (libraries async core ocplib-endian yojson)
  (preprocess (pps ppx_jane))
- (modules order book execution session_manager sequencer uuid_utils l3_event strategy_intf matching_engine))
+ (modules order book execution session_manager sequencer uuid_utils l3_event strategy_intf matching_engine add cancel))

@@ -1,16 +1,16 @@
 module PriceMap = Map.Make (Int)
 
 type t = {
-  buy_orders : Order.t list PriceMap.t;
-  sell_orders : Order.t list PriceMap.t;
+  buy_orders : Add.t list PriceMap.t;
+  sell_orders : Add.t list PriceMap.t;
 }
 
-let best_price (order : Order.t) (book : t) =
+let best_price (order : Add.t) (book : t) =
   match order.side with
-  | Order.Buy -> PriceMap.min_binding_opt book.sell_orders
-  | Order.Sell -> PriceMap.max_binding_opt book.buy_orders
+  | Add.Buy -> PriceMap.min_binding_opt book.sell_orders
+  | Add.Sell -> PriceMap.max_binding_opt book.buy_orders
 
-let insert_order (order : Order.t) (book : t) =
+let insert_order (order : Add.t) (book : t) =
   let current_map, update_book =
     match order.side with
     | Buy -> (book.buy_orders, fun buy_orders -> { book with buy_orders })
@@ -23,8 +23,8 @@ let insert_order (order : Order.t) (book : t) =
   let updated_map = PriceMap.add order.price updated_orders current_map in
   update_book updated_map
 
-let rec match_orders (order : Order.t) (price : int)
-    (orders_at_price : Order.t list) (executions : Execution.t list) =
+let rec match_orders (order : Add.t) (price : int)
+    (orders_at_price : Add.t list) (executions : Execution.t list) =
   match orders_at_price with
   | [] -> (order, [], executions)
   | resting_order :: rest ->
@@ -43,7 +43,7 @@ let rec match_orders (order : Order.t) (price : int)
           match_orders order' price rest executions'
         else (order', resting_order' :: rest, executions')
 
-let rec execute (order : Order.t) (book : t) =
+let rec execute (order : Add.t) (book : t) =
   let book_side =
     match order.side with Buy -> book.sell_orders | Sell -> book.buy_orders
   in
@@ -52,7 +52,7 @@ let rec execute (order : Order.t) (book : t) =
     match best_price order book with
     | None -> (order, book_side, [])
     | Some (price, orders_at_price) ->
-        if Order.price_matches price order then
+        if Add.price_matches price order then
           let order', orders_at_price', executions_at_price =
             match_orders order price orders_at_price []
           in
@@ -70,7 +70,7 @@ let rec execute (order : Order.t) (book : t) =
           (final_order, final_book_side, executions_at_price @ more_executions)
         else (order, book_side, [])
 
-let try_match_order (order : Order.t) (book : t) =
+let try_match_order (order : Add.t) (book : t) =
   match order.side with
   | Buy -> (
       match PriceMap.min_binding_opt book.sell_orders with

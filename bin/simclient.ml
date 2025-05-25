@@ -6,12 +6,13 @@ let generate_order ~sequence_number =
   let ticker = "TEST" in
   let price = Random.int 1000 + 100 in
   let size = Random.int 100 + 1 in
-  let side = if Random.bool () then Order.Buy else Order.Sell in
+  let side = if Random.bool () then Add.Buy else Add.Sell in
   let id = Uuid.to_string (Uuid_utils.gen_uuid ()) in
   let timestamp = Time_ns.to_int63_ns_since_epoch (Time_ns.now ()) in
 
   {
-    Order.id;
+    Add.id;
+    typ = "add";
     ticker;
     price;
     size;
@@ -25,7 +26,7 @@ let rec send_orders writer ~count ~seq =
   if count <= 0 then return ()
   else
     let order = generate_order ~sequence_number:seq in
-    let buf = Order.encode order in
+    let buf = Add.encode order in
     Writer.write_bytes writer buf;
     let%bind () = Writer.flushed writer in
     (* let%bind () = after (Time_float.Span.of_ms 2.) in *)

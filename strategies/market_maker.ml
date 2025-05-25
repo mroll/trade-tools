@@ -6,7 +6,8 @@ let make_order ticker price size side =
   let id = Uuid.to_string (Uuid_utils.gen_uuid ()) in
   let timestamp = Time_ns.to_int63_ns_since_epoch (Time_ns.now ()) in
   {
-    Order.id;
+    Add.id;
+    typ = "add";
     ticker;
     price;
     size;
@@ -24,9 +25,7 @@ let () =
       let spread = 10.
       let quote_size = 10
       let ticker = "TEST"
-
-      (* let my_top_of_book : (string, top_of_book) Hashtbl.t = *)
-      (*   Hashtbl.create (module String) *)
+      (* let engine = Matching_engine.create () *)
 
       let init w oracle_host oracle_port =
         print_endline "[+] Boostrapping market maker agent";
@@ -50,10 +49,10 @@ let () =
         in
         let bid = Float.round (fair_price -. (spread /. 2.0)) |> int_of_float in
         let ask = Float.round (fair_price +. (spread /. 2.0)) |> int_of_float in
-        let buy = make_order ticker bid quote_size Order.Buy in
-        let sel = make_order ticker ask quote_size Order.Sell in
-        let buy_buf = Order.encode buy in
-        let sel_buf = Order.encode sel in
+        let buy = make_order ticker bid quote_size Add.Buy in
+        let sel = make_order ticker ask quote_size Add.Sell in
+        let buy_buf = Add.encode buy in
+        let sel_buf = Add.encode sel in
         Writer.write_bytes w buy_buf;
         Writer.write_bytes w sel_buf;
         Writer.flushed w
@@ -61,4 +60,11 @@ let () =
       let handle_event ev _w =
         Log.Global.info "Got event: %s"
           (Yojson.Safe.to_string (L3_event.yojson_of_l3_event ev))
+
+      (* match ev with *)
+      (* | Add { order_id; ticker; side; price; size } -> *)
+      (*    let tob = Matching_engine.top_of_book engine  ticker in *)
+      (*    let _ = Matching_engine.process_order *)
+
+      (* | Trade { ticker; price; size; aggressor } -> *)
     end)
