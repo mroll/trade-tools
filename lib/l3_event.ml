@@ -1,15 +1,46 @@
 open Async
 
-type t =
-  | Add of {
-      order_id : string;
-      ticker : string;
-      side : Add.side;
-      price : int;
-      size : int;
+type add_event = {
+  order_id : string;
+  ticker : string;
+  side : Add.side;
+  price : int;
+  size : int;
+}
+
+type cancel_event = { id : string; order_id : string }
+
+type trade_event = {
+  ticker : string;
+  price : int;
+  size : int;
+  aggressor : Add.side;
+}
+
+type t = Add of add_event | Cancel of cancel_event | Trade of trade_event
+
+let add_order_of_l3_event (l3_event : add_event) : Order.t =
+  Add
+    {
+      id = l3_event.order_id;
+      typ = "add";
+      ticker = l3_event.ticker;
+      price = l3_event.price;
+      size = l3_event.size;
+      side = l3_event.side;
+      timestamp = -1L;
+      sequence_number = -1L;
     }
-  | Cancel of { order_id : string }
-  | Trade of { ticker : string; price : int; size : int; aggressor : Add.side }
+
+let cancel_order_of_l3_event (l3_event : cancel_event) : Order.t =
+  Cancel
+    {
+      id = l3_event.id;
+      order_id = l3_event.order_id;
+      typ = "cancel";
+      timestamp = -1L;
+      sequence_number = -1L;
+    }
 
 (* TODO: Update for more order types *)
 let l3_event_of_add (add : Add.t) : t =
@@ -22,7 +53,8 @@ let l3_event_of_add (add : Add.t) : t =
       size = add.size;
     }
 
-let l3_event_of_cancel (cancel : Cancel.t) : t = Cancel { order_id = cancel.id }
+let l3_event_of_cancel (cancel : Cancel.t) : t =
+  Cancel { id = cancel.id; order_id = cancel.order_id }
 
 let l3_event_of_execution (execution : Execution.t) : t =
   Trade
@@ -54,8 +86,13 @@ let yojson_of_l3_event (event : t) : Yojson.Safe.t =
           ("price", `Int price);
           ("size", `Int size);
         ]
-  | Cancel { order_id } ->
-      `Assoc [ ("type", `String "cancel"); ("order_id", `String order_id) ]
+  | Cancel { id; order_id } ->
+      `Assoc
+        [
+          ("type", `String "cancel");
+          ("id", `String id);
+          ("order_id", `String order_id);
+        ]
   | Trade { ticker; price; size; aggressor } ->
       `Assoc
         [

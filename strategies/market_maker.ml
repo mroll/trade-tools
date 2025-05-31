@@ -25,7 +25,7 @@ let () =
       let spread = 10.
       let quote_size = 10
       let ticker = "TEST"
-      (* let engine = Matching_engine.create () *)
+      let engine = Matching_engine.create ()
 
       let init w oracle_host oracle_port =
         print_endline "[+] Boostrapping market maker agent";
@@ -57,14 +57,21 @@ let () =
         Writer.write_bytes w sel_buf;
         Writer.flushed w
 
-      let handle_event ev _w =
+      let handle_event (ev : L3_event.t) (_w : Writer.t) =
         Log.Global.info "Got event: %s"
-          (Yojson.Safe.to_string (L3_event.yojson_of_l3_event ev))
+          (Yojson.Safe.to_string (L3_event.yojson_of_l3_event ev));
 
-      (* match ev with *)
-      (* | Add { order_id; ticker; side; price; size } -> *)
-      (*    let tob = Matching_engine.top_of_book engine  ticker in *)
-      (*    let _ = Matching_engine.process_order *)
-
-      (* | Trade { ticker; price; size; aggressor } -> *)
+        let _ =
+          match ev with
+          | L3_event.Add add ->
+              Matching_engine.process_order engine
+                (L3_event.add_order_of_l3_event add)
+          | L3_event.Cancel cancel ->
+              Matching_engine.process_order engine
+                (L3_event.cancel_order_of_l3_event cancel)
+          | L3_event.Trade _trade ->
+              Log.Global.info "Skipping trade";
+              None
+        in
+        ()
     end)

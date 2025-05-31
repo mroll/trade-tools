@@ -2,6 +2,7 @@ open Async
 
 type t = {
   id : string;
+  order_id : string;
   typ : string;
   timestamp : int64;
   sequence_number : int64;

@@ -90,3 +90,33 @@ let try_match_order (order : Add.t) (book : t) =
             (updated_book, executions)
           else (book, [])
       | None -> (book, []))
+
+let cancel (book : t) (add : Add.t) =
+  let remove_order (order_map : Add.t list PriceMap.t) =
+    let found = ref false in
+    let updated_map =
+      PriceMap.update add.price
+        (fun orders_opt ->
+          match orders_opt with
+          | Some orders ->
+              Some
+                (List.filter
+                   (fun (o : Add.t) ->
+                     match String.equal o.id add.id with
+                     | true ->
+                         found := true;
+                         true
+                     | false -> false)
+                   orders)
+          | None -> None)
+        order_map
+    in
+    (updated_map, !found)
+  in
+  match add.side with
+  | Buy ->
+      let new_orders, found = remove_order book.buy_orders in
+      ({ book with buy_orders = new_orders }, found)
+  | Sell ->
+      let new_orders, found = remove_order book.sell_orders in
+      ({ book with sell_orders = new_orders }, found)

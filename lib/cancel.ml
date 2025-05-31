@@ -3,6 +3,7 @@ open Async
 
 type t = {
   id : string;
+  order_id : string;
   typ : string;
   timestamp : int64;
   sequence_number : int64;
@@ -14,10 +15,13 @@ let decode (buf : bytes) : t =
   if Bytes.length buf <> width then failwith "Invalid buffer length";
 
   let id = Bytes.sub buf ~pos:0 ~len:16 |> Bytes.to_string |> String.strip in
-  let timestamp = EndianBytes.BigEndian.get_int64 buf 28 in
-  let sequence_number = EndianBytes.BigEndian.get_int64 buf 36 in
+  let order_id =
+    Bytes.sub buf ~pos:16 ~len:16 |> Bytes.to_string |> String.strip
+  in
+  let timestamp = EndianBytes.BigEndian.get_int64 buf 32 in
+  let sequence_number = EndianBytes.BigEndian.get_int64 buf 40 in
 
-  { id; typ = "add"; timestamp; sequence_number }
+  { id; order_id; typ = "cancel"; timestamp; sequence_number }
 
 let accept_from_reader r =
   let buf = Bytes.create width in
@@ -33,7 +37,14 @@ let accept_from_reader r =
 
 let log_summary_from_bytes buf prefix =
   let id = Bytes.sub buf ~pos:0 ~len:16 |> Bytes.to_string |> String.strip in
-  let sequence_number = EndianBytes.BigEndian.get_int64 buf 36 in
+  let order_id =
+    Bytes.sub buf ~pos:16 ~len:16 |> Bytes.to_string |> String.strip
+  in
+  let timestamp = EndianBytes.BigEndian.get_int64 buf 32 in
+  let sequence_number = EndianBytes.BigEndian.get_int64 buf 40 in
 
-  Log.Global.info "%sid=%s type=cancel sequence_number=%s" prefix id
+  Log.Global.info
+    "%sid=%s order_id=%s type=cancel timestamp=%s sequence_number=%s" prefix id
+    order_id
+    (Int64.to_string timestamp)
     (Int64.to_string sequence_number)

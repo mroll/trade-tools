@@ -8,3 +8,4 @@ type t = {
 val best_price : Add.t -> t -> (int * Add.t list) option
 val insert_order : Add.t -> t -> t
 val try_match_order : Add.t -> t -> t * Execution.t list
+val cancel : t -> Add.t -> t * bool
