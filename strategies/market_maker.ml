@@ -71,7 +71,7 @@ let () =
                 (L3_event.cancel_order_of_l3_event cancel)
           | L3_event.Trade _trade ->
               Log.Global.info "Skipping trade";
-              None
+              []
         in
         ()
     end)

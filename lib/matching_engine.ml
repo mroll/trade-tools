@@ -6,9 +6,7 @@ type t = {
   orders : (string, Add.t) Hashtbl.t;
 }
 
-type process_result =
-  | Executions of Execution.t list
-  | CanceledAdds of Add.t option
+type process_result = Execution of Execution.t | CanceledAdd of Add.t
 
 let find_book t (order_id : string) : Book.t =
   let order = Hashtbl.find_exn t.orders order_id in
@@ -25,7 +23,7 @@ let create () : t =
     orders = Hashtbl.create (module String);
   }
 
-let process_order t order : process_result option =
+let process_order t order : process_result list =
   match order with
   | Order.Add add ->
       let book = find_book t add.ticker in
@@ -35,7 +33,7 @@ let process_order t order : process_result option =
         else updated_book
       in
       update_book t add.ticker book_after_insert;
-      Some (Executions executions)
+      List.map ~f:(fun e -> Execution e) executions
   | Order.Cancel cancel -> (
       let book = find_book t cancel.order_id in
       match Hashtbl.find t.orders cancel.order_id with
@@ -44,10 +42,10 @@ let process_order t order : process_result option =
           match found with
           | true ->
               Hashtbl.set t.books ~key:add.ticker ~data:updated_book;
-              Some (CanceledAdds (Some add))
+              [ CanceledAdd add ]
           | false ->
               Log.Global.info "No order to cancel";
-              None)
+              [])
       | None ->
           Log.Global.info "No order to cancel";
-          None)
+          [])

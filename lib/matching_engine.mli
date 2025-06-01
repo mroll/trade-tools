@@ -5,9 +5,7 @@ type t = {
   orders : (string, Add.t) Hashtbl.t;
 }
 
-type process_result =
-  | Executions of Execution.t list
-  | CanceledAdds of Add.t option
+type process_result = Execution of Execution.t | CanceledAdd of Add.t
 
 val create : unit -> t
-val process_order : t -> Order.t -> process_result option
+val process_order : t -> Order.t -> process_result list
